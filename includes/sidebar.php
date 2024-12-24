@@ -32,7 +32,7 @@ $basePath = str_repeat('../', $depth - 2);
         <li>
             <a href="#studentSubmenu" data-bs-toggle="collapse" aria-expanded="false">
                 <i class="fas fa-user-graduate"></i>
-                <span>សិស្ស</span>
+                <span>គ្រប់គ្រងសិស្ស</span>
             </a>
             <ul class="collapse list-unstyled" id="studentSubmenu">
                 <li>
@@ -113,6 +113,23 @@ $basePath = str_repeat('../', $depth - 2);
                         <span>បន្ថែមមុខវិជ្ជា</span>
                     </a>
                 </li>
+            </ul>
+        </li>
+
+         <!-- payment Management -->
+         <li>
+            <a href="#paymentSubmenu" data-bs-toggle="collapse" class="dropdown-toggle">
+                <i class="fas fa-book"></i>
+                <span>ការបង់ថ្លៃសិក្សា</span>
+            </a>
+            <ul class="collapse list-unstyled" id="paymentSubmenu">
+                <li>
+                    <a href="<?php echo $basePath; ?>views/payment/payment-list.php">
+                        <i class="fas fa-list"></i>
+                        <span>បញ្ជីការបង់ថ្លៃសិក្សា</span>
+                    </a>
+                </li>
+               
             </ul>
         </li>
 
