@@ -1,0 +1,114 @@
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+}
+
+.bg-image {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 65%;
+    height: 100%;
+    background-image: url('../../asset/bg.webp');
+    background-size: cover;
+    background-position: center;
+    z-index: -1;
+}
+
+.login-container {
+    width: 400px;
+    margin-left: auto;
+    margin-right: 80px;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    align-self: center;
+}
+
+.logo {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.logo img {
+    max-width: 200px;
+    height: auto;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.form-control:focus {
+    border-color: #00A651;
+    outline: none;
+    box-shadow: 0 0 5px rgba(0, 166, 81, 0.2);
+}
+
+.language-select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 0px;
+    font-size: 14px;
+    margin-bottom: 20px;
+    background-color: white;
+}
+
+.btn-signin {
+    width: 100%;
+    padding: 12px;
+    background-color: #00A651;
+    color: white;
+    border: none;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-signin:hover {
+    background-color: #008c44;
+}
+
+.footer {
+    text-align: center;
+    margin-top: 20px;
+    color: #666;
+    font-size: 12px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .bg-image {
+        width: 50%;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        background: #f8f9fa;
+    }
+    .bg-image {
+        display: none;
+    }
+    .login-container {
+        margin: 20px auto;
+        width: 90%;
+        max-width: 400px;
+    }
+}

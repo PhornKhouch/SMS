@@ -138,8 +138,8 @@ try {
     // Add date printed
     $pdf->Ln(10);
     $pdf->SetFont('helvetica', 'I', 8);
-    $pdf->Cell(0, 10, 'Printed on: ' . date('d/m/Y H:i:s'), 0, 1, 'R');
-
+    // $pdf->Cell(0, 10, 'Printed on: ' . date('d/m/Y H:i:s'), 0, 1, 'R');
+    $pdf->Cell(0, 10, 'Auto-generated from the system on: ' . date('d/m/Y H:i:s'), 0, 1, 'R');
     // Output the PDF
     $pdf->Output('Payment_Receipt_' . $payment['id'] . '.pdf', 'I');
     
