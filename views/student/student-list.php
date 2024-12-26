@@ -10,29 +10,63 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $records_per_page = 10;
 $offset = ($page - 1) * $records_per_page;
 
+// Get filters
 $search = isset($_GET['search']) ? $_GET['search'] : '';
-$where = '';
+$class_filter = isset($_GET['class']) ? $_GET['class'] : '';
+$status_filter = isset($_GET['status']) ? $_GET['status'] : '';
+
+// Build where clause
+$where_conditions = [];
+$params = [];
+
 if (!empty($search)) {
-    $where = "WHERE name LIKE :search OR student_id LIKE :search OR class LIKE :search";
+    $where_conditions[] = "(s.name LIKE :search OR s.student_id LIKE :search OR sub.subject_name LIKE :search)";
+    $params[':search'] = "%{$search}%";
 }
 
+if (!empty($class_filter)) {
+    $where_conditions[] = "s.class = :class";
+    $params[':class'] = $class_filter;
+}
+
+if (!empty($status_filter)) {
+    $where_conditions[] = "s.status = :status";
+    $params[':status'] = $status_filter;
+}
+
+$where = '';
+if (!empty($where_conditions)) {
+    $where = "WHERE " . implode(" AND ", $where_conditions);
+}
+
+// Fetch all subjects for the filter
+$subjects_query = "SELECT * FROM subjects ORDER BY subject_name";
+$subjects_stmt = $pdo->prepare($subjects_query);
+$subjects_stmt->execute();
+$subjects = $subjects_stmt->fetchAll(PDO::FETCH_ASSOC);
+
 // Count total records for pagination
-$count_query = "SELECT COUNT(*) FROM students $where";
+$count_query = "SELECT COUNT(*) FROM students s 
+                LEFT JOIN subjects sub ON s.class = sub.id
+                $where";
 $stmt = $pdo->prepare($count_query);
-if (!empty($search)) {
-    $search_param = "%{$search}%";
-    $stmt->bindParam(':search', $search_param);
+foreach ($params as $key => $value) {
+    $stmt->bindValue($key, $value);
 }
 $stmt->execute();
 $total_records = $stmt->fetchColumn();
 $total_pages = ceil($total_records / $records_per_page);
 
 // Fetch students
-$query = "SELECT * FROM students $where ORDER BY name LIMIT :offset, :records_per_page";
+$query = "SELECT s.*, sub.subject_name as class_name 
+          FROM students s 
+          LEFT JOIN subjects sub ON s.class = sub.id 
+          $where 
+          ORDER BY s.name 
+          LIMIT :offset, :records_per_page";
 $stmt = $pdo->prepare($query);
-if (!empty($search)) {
-    $search_param = "%{$search}%";
-    $stmt->bindParam(':search', $search_param);
+foreach ($params as $key => $value) {
+    $stmt->bindValue($key, $value);
 }
 $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
 $stmt->bindParam(':records_per_page', $records_per_page, PDO::PARAM_INT);
@@ -59,6 +93,23 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
         .form-control, .form-select, 
         .btn, .page-link {
             font-family: 'Battambang', cursive;
+        }
+        .table {
+            border: 1px solid #dee2e6;
+        }
+        .table thead th {
+            background-color: #198754;
+            color: white;
+            border-bottom: 2px solid #0f5132;
+            vertical-align: middle;
+            font-weight: 500;
+        }
+        .table td {
+            vertical-align: middle;
+            border: 1px solid #dee2e6;
+        }
+        .table tbody tr:hover {
+            background-color: #f5f5f5;
         }
     </style>
 </head>
@@ -87,7 +138,7 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </nav>
                         </div>
                         <div>
-                            <a href="export-students.php<?php echo !empty($search) ? '?search=' . urlencode($search) : ''; ?>" class="btn btn-success me-2" id="exportBtn">
+                            <a href="export-students.php<?php echo !empty($search) ? '?search=' . urlencode($search) : ''; ?><?php echo !empty($class_filter) ? '&class=' . urlencode($class_filter) : ''; ?><?php echo !empty($status_filter) ? '&status=' . urlencode($status_filter) : ''; ?>" class="btn btn-success me-2" id="exportBtn">
                                 <i class="fas fa-file-excel"></i> នាំចេញ Excel
                             </a>
                             <a href="add-student.php" class="btn btn-primary">
@@ -110,9 +161,22 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <span class="ms-2">ជួរ</span>
                             </div>
                             <div class="search-box">
-                                <form action="" method="GET" class="d-flex">
+                                <form action="" method="GET" class="d-flex gap-2">
+                                    <select name="class" class="form-select">
+                                        <option value="">ថ្នាក់ទាំងអស់</option>
+                                        <?php foreach ($subjects as $subject): ?>
+                                            <option value="<?php echo $subject['id']; ?>" <?php echo $class_filter == $subject['id'] ? 'selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($subject['subject_name']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <select name="status" class="form-select">
+                                        <option value="">ស្ថានភាពទាំងអស់</option>
+                                        <option value="Active" <?php echo $status_filter === 'Active' ? 'selected' : ''; ?>>សកម្ម</option>
+                                        <option value="Inactive" <?php echo $status_filter === 'Inactive' ? 'selected' : ''; ?>>អសកម្ម</option>
+                                    </select>
                                     <input type="text" name="search" class="form-control" placeholder="ស្វែងរកសិស្ស..." value="<?php echo htmlspecialchars($search); ?>">
-                                    <button type="submit" class="btn btn-primary ms-2">
+                                    <button type="submit" class="btn btn-primary">
                                         <i class="fas fa-search"></i>
                                     </button>
                                 </form>
@@ -120,7 +184,7 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </div>
 
                         <div class="table-responsive">
-                            <table class="table table-hover">
+                            <table class="table table-bordered align-middle">
                                 <thead>
                                     <tr>
                                         <th>អត្តលេខសិស្ស</th>
@@ -129,7 +193,6 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <th>ថ្នាក់</th>
                                         <th>ភេទ</th>
                                         <th>ថ្ងៃខែឆ្នាំកំណើត</th>
-                                        <th>លេខទូរស័ព្ទ</th>
                                         <th>ស្ថានភាព</th>
                                         <th>សកម្មភាព</th>
                                     </tr>
@@ -146,10 +209,9 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                  alt="រូបថតសិស្ស">
                                         </td>
                                         <td><?php echo htmlspecialchars($student['name']); ?></td>
-                                        <td><?php echo htmlspecialchars($student['class']); ?></td>
+                                        <td><?php echo htmlspecialchars($student['class_name']); ?></td>
                                         <td><?php echo $student['gender'] == 'Male' ? 'ប្រុស' : ($student['gender'] == 'Female' ? 'ស្រី' : 'ផ្សេងៗ'); ?></td>
                                         <td><?php echo htmlspecialchars($student['date_of_birth']); ?></td>
-                                        <td><?php echo htmlspecialchars($student['phone']); ?></td>
                                         <td>
                                             <span class="badge bg-<?php echo $student['status'] == 'Active' ? 'success' : 'danger'; ?>">
                                                 <?php echo $student['status'] == 'Active' ? 'សកម្ម' : 'អសកម្ម'; ?>
@@ -183,7 +245,7 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <ul class="pagination mb-0">
                                     <?php if ($page > 1): ?>
                                     <li class="page-item">
-                                        <a class="page-link" href="?page=<?php echo ($page - 1); ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" aria-label="Previous">
+                                        <a class="page-link" href="?page=<?php echo ($page - 1); ?>&class=<?php echo urlencode($class_filter); ?>&status=<?php echo urlencode($status_filter); ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" aria-label="Previous">
                                             <span aria-hidden="true">&laquo;</span>
                                         </a>
                                     </li>
@@ -191,7 +253,7 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                                     <?php for ($i = 1; $i <= $total_pages; $i++): ?>
                                     <li class="page-item <?php echo $page == $i ? 'active' : ''; ?>">
-                                        <a class="page-link" href="?page=<?php echo $i; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>">
+                                        <a class="page-link" href="?page=<?php echo $i; ?>&class=<?php echo urlencode($class_filter); ?>&status=<?php echo urlencode($status_filter); ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>">
                                             <?php echo $i; ?>
                                         </a>
                                     </li>
@@ -199,7 +261,7 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                                     <?php if ($page < $total_pages): ?>
                                     <li class="page-item">
-                                        <a class="page-link" href="?page=<?php echo ($page + 1); ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" aria-label="Next">
+                                        <a class="page-link" href="?page=<?php echo ($page + 1); ?>&class=<?php echo urlencode($class_filter); ?>&status=<?php echo urlencode($status_filter); ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" aria-label="Next">
                                             <span aria-hidden="true">&raquo;</span>
                                         </a>
                                     </li>
@@ -251,10 +313,6 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <tr>
                                         <th>ថ្ងៃខែឆ្នាំកំណើត</th>
                                         <td id="studentDob"></td>
-                                    </tr>
-                                    <tr>
-                                        <th>លេខទូរស័ព្ទ</th>
-                                        <td id="studentPhone"></td>
                                     </tr>
                                     <tr>
                                         <th>អាសយដ្ឋាន</th>
@@ -319,7 +377,6 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         $('#studentGender').text(student.gender === 'Male' ? 'ប្រុស' : 
                             (student.gender === 'Female' ? 'ស្រី' : 'ផ្សេងៗ'));
                         $('#studentDob').text(student.date_of_birth);
-                        $('#studentPhone').text(student.phone);
                         $('#studentAddress').text(student.address);
                         $('#studentStatus').text(student.status === 'Active' ? 'សកម្ម' : 'អសកម្ម');
                         
@@ -383,11 +440,30 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
             // Add search parameter if exists
             const urlParams = new URLSearchParams(window.location.search);
             const search = urlParams.get('search');
+            const classFilter = urlParams.get('class');
+            const statusFilter = urlParams.get('status');
+            
             if (search) {
                 const input = document.createElement('input');
                 input.type = 'hidden';
                 input.name = 'search';
                 input.value = search;
+                form.appendChild(input);
+            }
+            
+            if (classFilter) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'class';
+                input.value = classFilter;
+                form.appendChild(input);
+            }
+            
+            if (statusFilter) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'status';
+                input.value = statusFilter;
                 form.appendChild(input);
             }
             

@@ -29,51 +29,77 @@ try {
     exit();
 }
 
+// Fetch subjects
+$subject_query = "SELECT * FROM subjects ORDER BY subject_name";
+$subject_stmt = $pdo->prepare($subject_query);
+$subject_stmt->execute();
+$subjects = $subject_stmt->fetchAll(PDO::FETCH_ASSOC);
+
 // Handle form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     try {
-        // Validate input
-        $required_fields = ['student_id', 'name', 'class', 'gender', 'date_of_birth', 'email'];
-        foreach ($required_fields as $field) {
-            if (empty($_POST[$field])) {
-                throw new Exception("Please fill in all required fields");
-            }
-        }
+        // Validate and sanitize input
+        $student_id = $_POST['student_id'];
+        $name = $_POST['name'];
+        $class = $_POST['class']; // This will now be the subject ID
+        $gender = $_POST['gender'];
+        $date_of_birth = $_POST['date_of_birth'];
+        $email = $_POST['email'];
+        $phone = $_POST['phone'];
+        $address = $_POST['address'];
+        $parent_name = $_POST['parent_name'];
+        $parent_phone = $_POST['parent_phone'];
+        $status = $_POST['status'];
+        $photo = $_FILES['photo'];
 
-        // Validate email format
-        if (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
-            throw new Exception("Invalid email format");
-        }
+        // Start transaction
+        $pdo->beginTransaction();
 
-        // Check if student ID already exists (excluding current student)
-        $check_stmt = $pdo->prepare("SELECT COUNT(*) FROM students WHERE student_id = ? AND id != ?");
-        $check_stmt->execute([$_POST['student_id'], $_GET['id']]);
-        if ($check_stmt->fetchColumn() > 0) {
-            throw new Exception("Student ID already exists");
-        }
+        // Update student information
+        $update_query = "UPDATE students SET 
+                        student_id = :student_id,
+                        name = :name,
+                        class = :class,
+                        gender = :gender,
+                        date_of_birth = :date_of_birth,
+                        email = :email,
+                        phone = :phone,
+                        address = :address,
+                        parent_name = :parent_name,
+                        parent_phone = :parent_phone,
+                        status = :status
+                        WHERE id = :id";
 
-        // Check if email already exists (excluding current student)
-        $check_stmt = $pdo->prepare("SELECT COUNT(*) FROM students WHERE email = ? AND id != ?");
-        $check_stmt->execute([$_POST['email'], $_GET['id']]);
-        if ($check_stmt->fetchColumn() > 0) {
-            throw new Exception("Email already exists");
-        }
+        $stmt = $pdo->prepare($update_query);
+        $stmt->bindParam(':student_id', $student_id);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':class', $class);
+        $stmt->bindParam(':gender', $gender);
+        $stmt->bindParam(':date_of_birth', $date_of_birth);
+        $stmt->bindParam(':email', $email);
+        $stmt->bindParam(':phone', $phone);
+        $stmt->bindParam(':address', $address);
+        $stmt->bindParam(':parent_name', $parent_name);
+        $stmt->bindParam(':parent_phone', $parent_phone);
+        $stmt->bindParam(':status', $status);
+        $stmt->bindParam(':id', $_GET['id']);
+
+        $stmt->execute();
 
         // Handle file upload
-        $photo = $student['photo']; // Keep existing photo by default
-        if (isset($_FILES['photo']) && $_FILES['photo']['error'] == 0) {
+        if (isset($photo) && $photo['error'] == 0) {
             $allowed = ['jpg', 'jpeg', 'png', 'gif'];
-            $filename = $_FILES['photo']['name'];
+            $filename = $photo['name'];
             $filetype = pathinfo($filename, PATHINFO_EXTENSION);
             
             if (!in_array(strtolower($filetype), $allowed)) {
                 throw new Exception('Only JPG, JPEG, PNG & GIF files are allowed');
             }
 
-            $photo = time() . '.' . $filetype;
-            $upload_path = $basePath . 'uploads/students/' . $photo;
+            $new_photo = time() . '.' . $filetype;
+            $upload_path = $basePath . 'uploads/students/' . $new_photo;
             
-            if (!move_uploaded_file($_FILES['photo']['tmp_name'], $upload_path)) {
+            if (!move_uploaded_file($photo['tmp_name'], $upload_path)) {
                 throw new Exception('Failed to upload file');
             }
 
@@ -81,49 +107,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if (!empty($student['photo']) && file_exists($basePath . 'uploads/students/' . $student['photo'])) {
                 unlink($basePath . 'uploads/students/' . $student['photo']);
             }
+
+            // Update photo in database
+            $update_photo_query = "UPDATE students SET photo = :photo WHERE id = :id";
+            $update_photo_stmt = $pdo->prepare($update_photo_query);
+            $update_photo_stmt->bindParam(':photo', $new_photo);
+            $update_photo_stmt->bindParam(':id', $_GET['id']);
+            $update_photo_stmt->execute();
         }
 
-        // Update database
-        $sql = "UPDATE students SET 
-                student_id = :student_id,
-                name = :name,
-                class = :class,
-                gender = :gender,
-                date_of_birth = :date_of_birth,
-                email = :email,
-                phone = :phone,
-                address = :address,
-                parent_name = :parent_name,
-                parent_phone = :parent_phone,
-                photo = :photo,
-                status = :status
-                WHERE id = :id";
-        
-        $stmt = $pdo->prepare($sql);
-        
-        $stmt->execute([
-            ':student_id' => $_POST['student_id'],
-            ':name' => $_POST['name'],
-            ':class' => $_POST['class'],
-            ':gender' => $_POST['gender'],
-            ':date_of_birth' => $_POST['date_of_birth'],
-            ':email' => $_POST['email'],
-            ':phone' => $_POST['phone'] ?? null,
-            ':address' => $_POST['address'] ?? null,
-            ':parent_name' => $_POST['parent_name'] ?? null,
-            ':parent_phone' => $_POST['parent_phone'] ?? null,
-            ':photo' => $photo,
-            ':status' => $_POST['status'],
-            ':id' => $_GET['id']
-        ]);
+        // Commit transaction
+        $pdo->commit();
 
         $_SESSION['success_message'] = "Student updated successfully!";
         header("Location: student-list.php");
         exit();
 
     } catch (Exception $e) {
+        // Rollback transaction
+        $pdo->rollBack();
         $_SESSION['error_message'] = $e->getMessage();
     } catch (PDOException $e) {
+        // Rollback transaction
+        $pdo->rollBack();
         $_SESSION['error_message'] = "Database error: " . $e->getMessage();
     }
 }
@@ -208,11 +214,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <label for="class" class="form-label">ថ្នាក់ *</label>
                                         <select class="form-select" id="class" name="class" required>
                                             <option value="">ជ្រើសរើសថ្នាក់</option>
-                                            <option value="Class 1" <?php echo $student['class'] == 'Class 1' ? 'selected' : ''; ?>>ថ្នាក់ទី ១</option>
-                                            <option value="Class 2" <?php echo $student['class'] == 'Class 2' ? 'selected' : ''; ?>>ថ្នាក់ទី ២</option>
-                                            <option value="Class 3" <?php echo $student['class'] == 'Class 3' ? 'selected' : ''; ?>>ថ្នាក់ទី ៣</option>
-                                            <option value="Class 4" <?php echo $student['class'] == 'Class 4' ? 'selected' : ''; ?>>ថ្នាក់ទី ៤</option>
-                                            <option value="Class 5" <?php echo $student['class'] == 'Class 5' ? 'selected' : ''; ?>>ថ្នាក់ទី ៥</option>
+                                            <?php foreach ($subjects as $subject): ?>
+                                                <option value="<?php echo htmlspecialchars($subject['id']); ?>" 
+                                                        <?php echo $student['class'] == $subject['id'] ? 'selected' : ''; ?>>
+                                                    <?php echo htmlspecialchars($subject['subject_name']); ?>
+                                                </option>
+                                            <?php endforeach; ?>
                                         </select>
                                     </div>
                                     

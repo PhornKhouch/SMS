@@ -152,6 +152,27 @@ $basePath = str_repeat('../', $depth - 2);
             </ul>
         </li>
 
+        <!-- payment Management -->
+        <li>
+            <a href="#ReportSubmenu" data-bs-toggle="collapse"  >
+                <i class="fas fa-book"></i>
+                <span>របាយការណ៍</span>
+            </a>
+            <ul class="collapse list-unstyled" id="ReportSubmenu">
+                <li>
+                    <a href="<?php echo $basePath; ?>views/Report/RPTStudent.php">
+                        <i class="fas fa-list" style="margin-left: 8px"></i>
+                        <span>របាយការណ៍សិស្ស</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo $basePath; ?>views/Report/RPTPayment.php">
+                        <i class="fas fa-list" style="margin-left: 8px"></i>
+                        <span>ការបង់ថ្លៃសិក្សា</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
         <!-- Settings -->
         <li>
             <a href="<?php echo $basePath; ?>views/settings/list-settings.php">

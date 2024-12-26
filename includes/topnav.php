@@ -4,7 +4,7 @@
             <i class="fas fa-bars"></i>
         </button>
         <div class="d-flex justify-content-between w-100 align-items-center ms-3">
-            <input type="text" class="form-control search-input" placeholder="Search Student Name">
+            <input type="text" class="form-control search-input" placeholder="Search functionality here...">
             <div class="d-flex align-items-center">
                 <div class="notification-icon me-3">
                     <i class="fas fa-bell"></i>
