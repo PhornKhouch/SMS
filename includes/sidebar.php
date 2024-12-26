@@ -56,14 +56,14 @@ $basePath = str_repeat('../', $depth - 2);
             <ul class="collapse list-unstyled" id="studentSubmenu">
                 <li>
                     <a href="<?php echo $basePath; ?>views/student/student-list.php">
-                        <i class="fas fa-list" style="margin-left: 8px"></i>
-                        <span>បញ្ជីសិស្ស</span>
+                        <i class="fas fa-table"></i>
+                        <span>តារាងព័ត៌មានសិស្ស</span>
                     </a>
                 </li>
                 <li>
                     <a href="<?php echo $basePath; ?>views/student/add-student.php">
-                        <i class="fas fa-user-plus" style="margin-left: 8px"></i>
-                        <span>បន្ថែមសិស្ស</span>
+                        <i class="fas fa-plus-circle"></i>
+                        <span>បង្កើតសិស្ស</span>
                     </a>
                 </li>
             </ul>
@@ -78,14 +78,14 @@ $basePath = str_repeat('../', $depth - 2);
             <ul class="collapse list-unstyled" id="teacherSubmenu">
                 <li>
                     <a href="<?php echo $basePath; ?>views/teacher/teacher-list.php">
-                        <i class="fas fa-list"style="margin-left: 8px"></i>
-                        <span>បញ្ជីគ្រូបង្រៀន</span>
+                        <i class="fas fa-table"></i>
+                        <span>តារាងព័ត៌មានគ្រូបង្រៀន</span>
                     </a>
                 </li>
                 <li>
                     <a href="<?php echo $basePath; ?>views/teacher/add-teacher.php">
-                        <i class="fas fa-user-plus" style="margin-left: 8px"></i>
-                        <span>បន្ថែមគ្រូបង្រៀន</span>
+                        <i class="fas fa-plus-circle"></i>
+                        <span>បង្កើតគ្រូបង្រៀន</span>
                     </a>
                 </li>
             </ul>
@@ -100,14 +100,14 @@ $basePath = str_repeat('../', $depth - 2);
             <ul class="collapse list-unstyled" id="classSubmenu">
                 <li>
                     <a href="<?php echo $basePath; ?>views/class/class-list.php">
-                        <i class="fas fa-list" style="margin-left: 8px"></i>
-                        <span>បញ្ជីថ្នាក់រៀន</span>
+                        <i class="fas fa-table"></i>
+                        <span>តារាងព័ត៌មានថ្នាក់រៀន</span>
                     </a>
                 </li>
                 <li>
                     <a href="<?php echo $basePath; ?>views/class/add-class.php">
-                        <i class="fas fa-plus" style="margin-left: 8px"></i>
-                        <span>បន្ថែមថ្នាក់រៀន</span>
+                        <i class="fas fa-plus-circle"></i>
+                        <span>បង្កើតថ្នាក់រៀន</span>
                     </a>
                 </li>
             </ul>
@@ -122,14 +122,14 @@ $basePath = str_repeat('../', $depth - 2);
             <ul class="collapse list-unstyled" id="subjectSubmenu">
                 <li>
                     <a href="<?php echo $basePath; ?>views/subject/subject-list.php">
-                        <i class="fas fa-list" style="margin-left: 8px"></i>
-                        <span>បញ្ជីមុខវិជ្ជា</span>
+                        <i class="fas fa-table"></i>
+                        <span>តារាងព័ត៌មានមុខវិជ្ជា</span>
                     </a>
                 </li>
                 <li>
                     <a href="<?php echo $basePath; ?>views/subject/add-subject.php">
-                        <i class="fas fa-plus" style="margin-left: 8px"></i>
-                        <span>បន្ថែមមុខវិជ្ជា</span>
+                        <i class="fas fa-plus-circle"></i>
+                        <span>បង្កើតមុខវិជ្ជា</span>
                     </a>
                 </li>
             </ul>
@@ -144,8 +144,8 @@ $basePath = str_repeat('../', $depth - 2);
             <ul class="collapse list-unstyled" id="paymentSubmenu">
                 <li>
                     <a href="<?php echo $basePath; ?>views/payment/payment-list.php">
-                        <i class="fas fa-list" style="margin-left: 8px"></i>
-                        <span>បញ្ជីការបង់ថ្លៃសិក្សា</span>
+                        <i class="fas fa-table"></i>
+                        <span>តារាងព័ត៌មានការបង់ថ្លៃសិក្សា</span>
                     </a>
                 </li>
                
@@ -161,13 +161,13 @@ $basePath = str_repeat('../', $depth - 2);
             <ul class="collapse list-unstyled" id="ReportSubmenu">
                 <li>
                     <a href="<?php echo $basePath; ?>views/Report/RPTStudent.php">
-                        <i class="fas fa-list" style="margin-left: 8px"></i>
+                        <i class="fas fa-file-alt"></i>
                         <span>របាយការណ៍សិស្ស</span>
                     </a>
                 </li>
                 <li>
                     <a href="<?php echo $basePath; ?>views/Report/RPTPayment.php">
-                        <i class="fas fa-list" style="margin-left: 8px"></i>
+                        <i class="fas fa-file-alt"></i>
                         <span>ការបង់ថ្លៃសិក្សា</span>
                     </a>
                 </li>
