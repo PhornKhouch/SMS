@@ -86,9 +86,14 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </ol>
                             </nav>
                         </div>
-                        <a href="add-student.php" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> បន្ថែមសិស្សថ្មី
-                        </a>
+                        <div>
+                            <a href="export-students.php<?php echo !empty($search) ? '?search=' . urlencode($search) : ''; ?>" class="btn btn-success me-2" id="exportBtn">
+                                <i class="fas fa-file-excel"></i> នាំចេញ Excel
+                            </a>
+                            <a href="add-student.php" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> បន្ថែមសិស្សថ្មី
+                            </a>
+                        </div>
                     </div>
                 </div>
 
@@ -271,6 +276,21 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
+    <!-- Loading Modal -->
+    <div class="modal fade" id="loadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center p-4">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">កំពុងដំណើរការ...</span>
+                    </div>
+                    <h5>កំពុងដំណើរការ...</h5>
+                    <p class="mb-0">សូមរង់ចាំមួយភ្លែត</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
@@ -347,6 +367,37 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
         // Records per page change
         document.getElementById('recordsPerPage').addEventListener('change', function() {
             window.location.href = '?records_per_page=' + this.value;
+        });
+
+        // Handle Excel export with loading
+        document.getElementById('exportBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+            loadingModal.show();
+            
+            // Create a form and submit it
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = this.href;
+            
+            // Add search parameter if exists
+            const urlParams = new URLSearchParams(window.location.search);
+            const search = urlParams.get('search');
+            if (search) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'search';
+                input.value = search;
+                form.appendChild(input);
+            }
+            
+            document.body.appendChild(form);
+            form.submit();
+
+            // Hide modal after download starts
+            setTimeout(() => {
+                loadingModal.hide();
+            }, 3000);
         });
     </script>
 </body>

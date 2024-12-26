@@ -16,22 +16,43 @@ $records_per_page = isset($_GET['records_per_page']) ? (int)$_GET['records_per_p
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $records_per_page;
 
-// Get search term
+// Get search term and filters
 $search = isset($_GET['search']) ? $_GET['search'] : '';
+$payment_type_filter = isset($_GET['payment_type']) ? $_GET['payment_type'] : '';
+$status_filter = isset($_GET['status']) ? $_GET['status'] : '';
 
 try {
     // Count total records
     $count_query = "SELECT COUNT(*) as total FROM payments p 
                     LEFT JOIN students s ON p.student_id = s.id";
+    $where_conditions = [];
+    $params = [];
+
     if (!empty($search)) {
-        $count_query .= " WHERE s.name LIKE :search 
-                         OR p.reference_number LIKE :search 
-                         OR p.payment_method LIKE :search
-                         OR p.pay_type LIKE :search";
+        $where_conditions[] = "(s.name LIKE :search 
+                              OR p.reference_number LIKE :search 
+                              OR p.payment_method LIKE :search
+                              OR p.pay_type LIKE :search)";
+        $params[':search'] = "%$search%";
     }
+
+    if (!empty($payment_type_filter)) {
+        $where_conditions[] = "p.pay_type = :payment_type";
+        $params[':payment_type'] = $payment_type_filter;
+    }
+
+    if (!empty($status_filter)) {
+        $where_conditions[] = "p.payment_status = :status";
+        $params[':status'] = $status_filter;
+    }
+
+    if (!empty($where_conditions)) {
+        $count_query .= " WHERE " . implode(" AND ", $where_conditions);
+    }
+
     $count_stmt = $pdo->prepare($count_query);
-    if (!empty($search)) {
-        $count_stmt->bindValue(':search', "%$search%", PDO::PARAM_STR);
+    foreach ($params as $key => $value) {
+        $count_stmt->bindValue($key, $value, PDO::PARAM_STR);
     }
     $count_stmt->execute();
     $result = $count_stmt->fetch(PDO::FETCH_ASSOC);
@@ -42,18 +63,15 @@ try {
               FROM payments p 
               LEFT JOIN students s ON p.student_id = s.id";
     
-    if (!empty($search)) {
-        $query .= " WHERE s.name LIKE :search 
-                    OR p.reference_number LIKE :search 
-                    OR p.payment_method LIKE :search
-                    OR p.pay_type LIKE :search";
+    if (!empty($where_conditions)) {
+        $query .= " WHERE " . implode(" AND ", $where_conditions);
     }
     
     $query .= " ORDER BY p.payment_date DESC LIMIT :offset, :records_per_page";
     
     $stmt = $pdo->prepare($query);
-    if (!empty($search)) {
-        $stmt->bindValue(':search', "%$search%", PDO::PARAM_STR);
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value, PDO::PARAM_STR);
     }
     $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
     $stmt->bindValue(':records_per_page', (int)$records_per_page, PDO::PARAM_INT);
@@ -116,6 +134,9 @@ try {
                             </nav>
                         </div>
                         <div>
+                            <a href="export-payments.php" class="btn btn-success me-2" id="exportBtn">
+                                <i class="fas fa-file-excel"></i> នាំចេញ Excel
+                            </a>
                             <a href="add-payment.php" class="btn btn-primary">
                                 <i class="fas fa-plus"></i> បង់ប្រាក់ថ្មី
                             </a>
@@ -143,6 +164,23 @@ try {
                                     <option value="25" <?php echo $records_per_page == 25 ? 'selected' : ''; ?>>25</option>
                                     <option value="50" <?php echo $records_per_page == 50 ? 'selected' : ''; ?>>50</option>
                                     <option value="100" <?php echo $records_per_page == 100 ? 'selected' : ''; ?>>100</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" name="payment_type" onchange="this.form.submit()">
+                                    <option value="">ប្រភេទបង់ប្រាក់ទាំងអស់</option>
+                                    <option value="Full" <?php echo $payment_type_filter === 'Full' ? 'selected' : ''; ?>>បង់ពេញ</option>
+                                    <option value="Monthly" <?php echo $payment_type_filter === 'Monthly' ? 'selected' : ''; ?>>ជាខែ</option>
+                                    <option value="Half" <?php echo $payment_type_filter === 'Half' ? 'selected' : ''; ?>>ពាក់កណ្តាល</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" name="status" onchange="this.form.submit()">
+                                    <option value="">ស្ថានភាពទាំងអស់</option>
+                                    <option value="Completed" <?php echo $status_filter === 'Completed' ? 'selected' : ''; ?>>បានបញ្ចប់</option>
+                                    <option value="Pending" <?php echo $status_filter === 'Pending' ? 'selected' : ''; ?>>កំពុងរង់ចាំ</option>
+                                    <option value="Failed" <?php echo $status_filter === 'Failed' ? 'selected' : ''; ?>>បរាជ័យ</option>
+                                    <option value="Refunded" <?php echo $status_filter === 'Refunded' ? 'selected' : ''; ?>>បានសងប្រាក់</option>
                                 </select>
                             </div>
                         </form>
@@ -231,7 +269,7 @@ try {
                                 // Previous page
                                 if ($page > 1): ?>
                                     <li class="page-item">
-                                        <a class="page-link" href="?page=<?php echo ($page - 1); ?>&records_per_page=<?php echo $records_per_page; ?>&search=<?php echo urlencode($search); ?>">
+                                        <a class="page-link" href="?page=<?php echo ($page - 1); ?>&records_per_page=<?php echo $records_per_page; ?>&search=<?php echo urlencode($search); ?>&payment_type=<?php echo urlencode($payment_type_filter); ?>&status=<?php echo urlencode($status_filter); ?>">
                                             <i class="fas fa-chevron-left"></i>
                                         </a>
                                     </li>
@@ -240,7 +278,7 @@ try {
                                 // Page numbers
                                 for ($i = max(1, $page - $pagination_range); $i <= min($total_pages, $page + $pagination_range); $i++): ?>
                                     <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
-                                        <a class="page-link" href="?page=<?php echo $i; ?>&records_per_page=<?php echo $records_per_page; ?>&search=<?php echo urlencode($search); ?>">
+                                        <a class="page-link" href="?page=<?php echo $i; ?>&records_per_page=<?php echo $records_per_page; ?>&search=<?php echo urlencode($search); ?>&payment_type=<?php echo urlencode($payment_type_filter); ?>&status=<?php echo urlencode($status_filter); ?>">
                                             <?php echo $i; ?>
                                         </a>
                                     </li>
@@ -249,7 +287,7 @@ try {
                                 // Next page
                                 if ($page < $total_pages): ?>
                                     <li class="page-item">
-                                        <a class="page-link" href="?page=<?php echo ($page + 1); ?>&records_per_page=<?php echo $records_per_page; ?>&search=<?php echo urlencode($search); ?>">
+                                        <a class="page-link" href="?page=<?php echo ($page + 1); ?>&records_per_page=<?php echo $records_per_page; ?>&search=<?php echo urlencode($search); ?>&payment_type=<?php echo urlencode($payment_type_filter); ?>&status=<?php echo urlencode($status_filter); ?>">
                                             <i class="fas fa-chevron-right"></i>
                                         </a>
                                     </li>
@@ -266,6 +304,21 @@ try {
         </div>
     </div>
 
+    <!-- Loading Modal -->
+    <div class="modal fade" id="loadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center p-4">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">កំពុងដំណើរការ...</span>
+                    </div>
+                    <h5>កំពុងដំណើរការ...</h5>
+                    <p class="mb-0">សូមរង់ចាំមួយភ្លែត</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -273,6 +326,56 @@ try {
     
     <script>
     $(document).ready(function() {
+        // Handle Excel export with loading
+        document.getElementById('exportBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+            loadingModal.show();
+            
+            // Create a form and submit it
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = this.href;
+            
+            // Add search parameter if exists
+            const urlParams = new URLSearchParams(window.location.search);
+            const search = urlParams.get('search');
+            const payment_type = urlParams.get('payment_type');
+            const status = urlParams.get('status');
+            
+            if (search) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'search';
+                input.value = search;
+                form.appendChild(input);
+            }
+            
+            if (payment_type) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'payment_type';
+                input.value = payment_type;
+                form.appendChild(input);
+            }
+            
+            if (status) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'status';
+                input.value = status;
+                form.appendChild(input);
+            }
+            
+            document.body.appendChild(form);
+            form.submit();
+
+            // Hide modal after download starts
+            setTimeout(() => {
+                loadingModal.hide();
+            }, 3000);
+        });
+
         // Delete Payment
         $('.delete-payment').click(function() {
             const id = $(this).data('id');
