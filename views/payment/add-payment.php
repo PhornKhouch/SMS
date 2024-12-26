@@ -13,6 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $payment_amount = filter_input(INPUT_POST, 'payment_amount', FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
         $payment_method = htmlspecialchars($_POST['payment_method'] ?? '', ENT_QUOTES, 'UTF-8');
         $payment_status = htmlspecialchars($_POST['payment_status'] ?? '', ENT_QUOTES, 'UTF-8');
+        $pay_type = htmlspecialchars($_POST['pay_type'] ?? '', ENT_QUOTES, 'UTF-8');
         $academic_year = htmlspecialchars($_POST['academic_year'] ?? '', ENT_QUOTES, 'UTF-8');
         $semester = htmlspecialchars($_POST['semester'] ?? '', ENT_QUOTES, 'UTF-8');
         $payment_for = htmlspecialchars($_POST['payment_for'] ?? '', ENT_QUOTES, 'UTF-8');
@@ -23,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Validate required fields
         if (empty($student_id) || empty($payment_date) || empty($payment_amount) || 
             empty($payment_method) || empty($payment_status) || empty($academic_year) || 
-            empty($semester) || empty($payment_for)) {
+            empty($semester) || empty($payment_for) || empty($pay_type)) {
             throw new Exception("សូមបំពេញគ្រប់ប្រអប់ដែលចាំបាច់");
         }
 
@@ -31,11 +32,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $query = "INSERT INTO payments (
             student_id, payment_date, payment_amount, payment_method, 
             payment_status, academic_year, semester, payment_for, 
-            reference_number, description, created_by
+            reference_number, description, created_by, pay_type
         ) VALUES (
             :student_id, :payment_date, :payment_amount, :payment_method,
             :payment_status, :academic_year, :semester, :payment_for,
-            :reference_number, :description, :created_by
+            :reference_number, :description, :created_by, :pay_type
         )";
 
         $stmt = $pdo->prepare($query);
@@ -50,7 +51,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             ':payment_for' => $payment_for,
             ':reference_number' => $reference_number,
             ':description' => $description,
-            ':created_by' => $created_by
+            ':created_by' => $created_by,
+            ':pay_type' => $pay_type
         ]);
 
         $_SESSION['success_message'] = "ការបង់ប្រាក់ត្រូវបានបន្ថែមដោយជោគជ័យ";
@@ -152,6 +154,16 @@ try {
                                             <option value="ABA">ABA</option>
                                             <option value="ACLEDA">ACLEDA</option>
                                             <option value="Wing">Wing</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="pay_type" class="form-label">ប្រភេទនៃការបង់ប្រាក់ *</label>
+                                        <select class="form-select" name="pay_type" id="pay_type" required>
+                                            <option value="">ជ្រើសរើសប្រភេទនៃការបង់ប្រាក់</option>
+                                            <option value="Full">បង់ពេញ</option>
+                                            <option value="Monthly">ជាខែ</option>
+                                            <option value="Half">ពាក់កណ្តាល</option>
                                         </select>
                                     </div>
                                 </div>

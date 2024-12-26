@@ -131,7 +131,7 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </thead>
                                 <tbody>
                                     <?php foreach ($students as $student): ?>
-                                    <tr>
+                                    <tr class="student-row" data-student-id="<?php echo htmlspecialchars($student['student_id']); ?>">
                                         <td><?php echo htmlspecialchars($student['student_id']); ?></td>
                                         <td>
                                             <img src="<?php echo !empty($student['photo']) ? $basePath . 'uploads/students/' . $student['photo'] : $basePath . 'assets/images/default-avatar.png'; ?>" 
@@ -211,11 +211,108 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
+    <!-- Student Details Modal -->
+    <div class="modal fade" id="studentDetailsModal" tabindex="-1" aria-labelledby="studentDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="studentDetailsModalLabel">ព័ត៌មានសិស្ស</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <img src="" id="studentPhoto" class="img-fluid rounded-circle" alt="រូបថតសិស្ស">
+                        </div>
+                        <div class="col-md-8">
+                            <table class="table table-borderless">
+                                <tbody>
+                                    <tr>
+                                        <th>អត្តលេខសិស្ស</th>
+                                        <td id="studentId"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>ឈ្មោះ</th>
+                                        <td id="studentName"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>ថ្នាក់</th>
+                                        <td id="studentClass"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>ភេទ</th>
+                                        <td id="studentGender"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>ថ្ងៃខែឆ្នាំកំណើត</th>
+                                        <td id="studentDob"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>លេខទូរស័ព្ទ</th>
+                                        <td id="studentPhone"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>អាសយដ្ឋាន</th>
+                                        <td id="studentAddress"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>ស្ថានភាព</th>
+                                        <td id="studentStatus"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">បិទ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // Make table rows clickable
+        $(document).ready(function() {
+            $('.student-row').dblclick(function() {
+                const studentId = $(this).data('student-id');
+                fetchStudentDetails(studentId);
+            });
+
+            function fetchStudentDetails(studentId) {
+                $.ajax({
+                    url: 'get-student-details.php',
+                    data: { student_id: studentId },
+                    method: 'GET',
+                    success: function(student) {
+                        $('#studentPhoto').attr('src', student.photo ? 
+                            '<?php echo $basePath; ?>uploads/students/' + student.photo : 
+                            '<?php echo $basePath; ?>assets/images/default-avatar.png'
+                        );
+                        $('#studentId').text(student.student_id);
+                        $('#studentName').text(student.name);
+                        $('#studentClass').text(student.class);
+                        $('#studentGender').text(student.gender === 'Male' ? 'ប្រុស' : 
+                            (student.gender === 'Female' ? 'ស្រី' : 'ផ្សេងៗ'));
+                        $('#studentDob').text(student.date_of_birth);
+                        $('#studentPhone').text(student.phone);
+                        $('#studentAddress').text(student.address);
+                        $('#studentStatus').text(student.status === 'Active' ? 'សកម្ម' : 'អសកម្ម');
+                        
+                        $('#studentDetailsModal').modal('show');
+                    },
+                    error: function(xhr, status, error) {
+                        toastr.error('មានបញ្ហាក្នុងការទាញយកព័ត៌មាន');
+                        console.error('Error:', error);
+                    }
+                });
+            }
+        });
+
         // Delete confirmation
         function confirmDelete(id) {
             Swal.fire({

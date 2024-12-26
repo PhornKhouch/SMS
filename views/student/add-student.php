@@ -164,11 +164,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <label for="class" class="form-label">ថ្នាក់ *</label>
                                         <select class="form-select" id="class" name="class" required style="font-family: 'Battambang', cursive;">
                                             <option value="">ជ្រើសរើសថ្នាក់</option>
-                                            <option value="Class 1">ថ្នាក់ទី ១</option>
-                                            <option value="Class 2">ថ្នាក់ទី ២</option>
-                                            <option value="Class 3">ថ្នាក់ទី ៣</option>
-                                            <option value="Class 4">ថ្នាក់ទី ៤</option>
-                                            <option value="Class 5">ថ្នាក់ទី ៥</option>
+                                            <?php
+                                                $query = "SELECT * FROM subjects WHERE status = '1' ORDER BY subject_name ASC";
+                                                $result = mysqli_query($conn, $query);
+                                                
+                                                if (!$result) {
+                                                    echo "<!-- Error: " . mysqli_error($conn) . " -->";
+                                                    echo "<option value=''>No classes available</option>";
+                                                } else {
+                                                    while ($row = mysqli_fetch_assoc($result)) {
+                                                        echo "<option value='" . htmlspecialchars($row['subject_code']) . "'>" . 
+                                                             htmlspecialchars($row['subject_name']) . "</option>";
+                                                    }
+                                                }
+                                            ?>  
                                         </select>
                                     </div>
                                     

@@ -159,7 +159,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     
                                     <div class="mb-3">
                                         <label for="subject" class="form-label">មុខវិជ្ជា *</label>
-                                        <input type="text" class="form-control" id="subject" name="subject" required>
+                                        <select class="form-select" id="subject" name="subject" required>
+                                            <option value="">ជ្រើសមុខវិជ្ជា</option>
+                                            <?php
+                                                $query = "SELECT * FROM subjects WHERE status = '1' ORDER BY subject_name ASC";
+                                                $result = mysqli_query($conn, $query);
+                                                
+                                                if (!$result) {
+                                                    echo "<!-- Error: " . mysqli_error($conn) . " -->";
+                                                    echo "<option value=''>No classes available</option>";
+                                                } else {
+                                                    while ($row = mysqli_fetch_assoc($result)) {
+                                                        echo "<option value='" . htmlspecialchars($row['subject_code']) . "'>" . 
+                                                             htmlspecialchars($row['subject_name']) . "</option>";
+                                                    }
+                                                }
+                                            ?> 
+                                        </select>
                                     </div>
                                     
                                     <div class="mb-3">

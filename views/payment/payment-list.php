@@ -26,7 +26,8 @@ try {
     if (!empty($search)) {
         $count_query .= " WHERE s.name LIKE :search 
                          OR p.reference_number LIKE :search 
-                         OR p.payment_method LIKE :search";
+                         OR p.payment_method LIKE :search
+                         OR p.pay_type LIKE :search";
     }
     $count_stmt = $pdo->prepare($count_query);
     if (!empty($search)) {
@@ -37,14 +38,15 @@ try {
     $total_count = (int)$result['total'];
 
     // Main query
-    $query = "SELECT p.*, s.name as student_name, s.student_id as student_code 
+    $query = "SELECT p.*, s.name as student_name, s.student_id as student_code, p.pay_type 
               FROM payments p 
               LEFT JOIN students s ON p.student_id = s.id";
     
     if (!empty($search)) {
         $query .= " WHERE s.name LIKE :search 
                     OR p.reference_number LIKE :search 
-                    OR p.payment_method LIKE :search";
+                    OR p.payment_method LIKE :search
+                    OR p.pay_type LIKE :search";
     }
     
     $query .= " ORDER BY p.payment_date DESC LIMIT :offset, :records_per_page";
@@ -160,16 +162,16 @@ try {
                                         <th>កាលបរិច្ឆេទបង់ប្រាក់</th>
                                         <th>ចំនួនទឹកប្រាក់</th>
                                         <th>វិធីសាស្ត្របង់ប្រាក់</th>
+                                        <th>ប្រភេទបង់ប្រាក់</th>
                                         <th>ស្ថានភាព</th>
                                         <th>ឆ្នាំសិក្សា</th>
-                                        <th>ឆមាស</th>
                                         <th>សកម្មភាព</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php if (empty($payments)): ?>
                                     <tr>
-                                        <td colspan="10" class="text-center">មិនមានទិន្នន័យទេ</td>
+                                        <td colspan="9" class="text-center">មិនមានទិន្នន័យទេ</td>
                                     </tr>
                                     <?php else: ?>
                                         <?php foreach ($payments as $index => $payment): ?>
@@ -181,12 +183,22 @@ try {
                                             <td>$<?php echo number_format($payment['payment_amount'], 2); ?></td>
                                             <td><?php echo htmlspecialchars($payment['payment_method']); ?></td>
                                             <td>
+                                                <?php 
+                                                    $payTypeLabels = [
+                                                        'Full' => 'បង់ពេញ',
+                                                        'Monthly' => 'ជាខែ',
+                                                        'Half' => 'ពាក់កណ្តាល'
+                                                    ];
+                                                    $payType = $payment['pay_type'] ?? '';
+                                                    echo htmlspecialchars($payTypeLabels[$payType] ?? $payType);
+                                                ?>
+                                            </td>
+                                            <td>
                                                 <span class="payment-status status-<?php echo $payment['payment_status']; ?>">
                                                     <?php echo htmlspecialchars($payment['payment_status']); ?>
                                                 </span>
                                             </td>
                                             <td><?php echo htmlspecialchars($payment['academic_year']); ?></td>
-                                            <td><?php echo htmlspecialchars($payment['semester']); ?></td>
                                             <td class="text-center">
                                                 <a href="view-payment.php?id=<?php echo $payment['id']; ?>" 
                                                    class="btn btn-info btn-sm" title="មើល">

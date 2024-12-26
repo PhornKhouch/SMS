@@ -154,7 +154,7 @@ $basePath = str_repeat('../', $depth - 2);
 
         <!-- Settings -->
         <li>
-            <a href="<?php echo $basePath; ?>views/settings.php">
+            <a href="<?php echo $basePath; ?>views/settings/list-settings.php">
                 <i class="fas fa-cog"></i>
                 <span>ការកំណត់</span>
             </a>

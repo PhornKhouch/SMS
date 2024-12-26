@@ -16,7 +16,7 @@ if (!$payment_id) {
 
 // Fetch payment data
 try {
-    $stmt = $pdo->prepare("SELECT p.*, s.name as student_name, s.student_id as student_code 
+    $stmt = $pdo->prepare("SELECT p.*, p.pay_type, s.name as student_name, s.student_id as student_code 
                           FROM payments p 
                           LEFT JOIN students s ON p.student_id = s.id 
                           WHERE p.id = ?");
@@ -46,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $payment_amount = filter_input(INPUT_POST, 'payment_amount', FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
         $payment_method = htmlspecialchars($_POST['payment_method'] ?? '', ENT_QUOTES, 'UTF-8');
         $payment_status = htmlspecialchars($_POST['payment_status'] ?? '', ENT_QUOTES, 'UTF-8');
+        $pay_type = htmlspecialchars($_POST['pay_type'] ?? '', ENT_QUOTES, 'UTF-8');
         $academic_year = htmlspecialchars($_POST['academic_year'] ?? '', ENT_QUOTES, 'UTF-8');
         $semester = htmlspecialchars($_POST['semester'] ?? '', ENT_QUOTES, 'UTF-8');
         $payment_for = htmlspecialchars($_POST['payment_for'] ?? '', ENT_QUOTES, 'UTF-8');
@@ -55,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Validate required fields
         if (empty($student_id) || empty($payment_date) || empty($payment_amount) || 
             empty($payment_method) || empty($payment_status) || empty($academic_year) || 
-            empty($semester) || empty($payment_for)) {
+            empty($semester) || empty($payment_for) || empty($pay_type)) {
             throw new Exception("សូមបំពេញគ្រប់ប្រអប់ដែលចាំបាច់");
         }
 
@@ -66,6 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             payment_amount = :payment_amount,
             payment_method = :payment_method,
             payment_status = :payment_status,
+            pay_type = :pay_type,
             academic_year = :academic_year,
             semester = :semester,
             payment_for = :payment_for,
@@ -80,6 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             ':payment_amount' => $payment_amount,
             ':payment_method' => $payment_method,
             ':payment_status' => $payment_status,
+            ':pay_type' => $pay_type,
             ':academic_year' => $academic_year,
             ':semester' => $semester,
             ':payment_for' => $payment_for,
@@ -179,6 +182,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                             <option value="ACLEDA" <?php echo ($payment['payment_method'] == 'ACLEDA') ? 'selected' : ''; ?>>ACLEDA</option>
                                             <option value="Wing" <?php echo ($payment['payment_method'] == 'Wing') ? 'selected' : ''; ?>>Wing</option>
                                             <option value="True Money" <?php echo ($payment['payment_method'] == 'True Money') ? 'selected' : ''; ?>>True Money</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="pay_type" class="form-label">ប្រភេទនៃការបង់ប្រាក់ *</label>
+                                        <select class="form-select" name="pay_type" id="pay_type" required>
+                                            <option value="">ជ្រើសរើសប្រភេទនៃការបង់ប្រាក់</option>
+                                            <option value="Full" <?php echo ($payment['pay_type'] == 'Full') ? 'selected' : ''; ?>>បង់ពេញ</option>
+                                            <option value="Monthly" <?php echo ($payment['pay_type'] == 'Monthly') ? 'selected' : ''; ?>>ជាខែ</option>
+                                            <option value="Half" <?php echo ($payment['pay_type'] == 'Half') ? 'selected' : ''; ?>>ពាក់កណ្តាល</option>
                                         </select>
                                     </div>
                                 </div>
