@@ -173,7 +173,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                                     echo "<option value=''>No classes available</option>";
                                                 } else {
                                                     while ($row = mysqli_fetch_assoc($result)) {
-                                                        echo "<option value='" . htmlspecialchars($row['subject_code']) . "'>" . 
+                                                        echo "<option value='" . htmlspecialchars($row['id']) . "'>" . 
                                                              htmlspecialchars($row['subject_name']) . "</option>";
                                                     }
                                                 }

@@ -27,7 +27,7 @@ if (!empty($class_filter)) {
 }
 
 if (!empty($status_filter)) {
-    $where_conditions[] = "p.payment_status = :status";
+    $where_conditions[] = "p.payment_status = :month";
     $params[':status'] = $status_filter;
 }
 
@@ -54,7 +54,7 @@ $query = "SELECT s.student_id, s.name as student_name,
           FROM students s 
           LEFT JOIN subjects sub ON s.class = sub.id 
           LEFT JOIN payments p ON s.id = p.student_id
-          $where 
+          Where p.pay_type in ('Monthly', 'Half')
           ORDER BY p.payment_date DESC";
 
 $stmt = $pdo->prepare($query);

@@ -222,9 +222,19 @@ try {
                                                     </td>
                                                     <td><?php echo $user['last_login'] ? date('d-m-Y H:i', strtotime($user['last_login'])) : 'មិនធ្លាប់'; ?></td>
                                                     <td class="action-buttons">
-                                                        <a href="edit-user.php?id=<?php echo $user['id']; ?>" class="btn btn-sm btn-primary" title="កែប្រែ">
-                                                            <i class="fas fa-edit"></i>
-                                                        </a>
+                                                        <button type="button" 
+                                                           class="btn btn-sm btn-warning text-white" 
+                                                           title="កែប្រែ"
+                                                           data-bs-toggle="modal"
+                                                           data-bs-target="#editUserModal"
+                                                           onclick="editUser(<?php echo htmlspecialchars(json_encode([
+                                                               'id' => $user['id'],
+                                                               'username' => $user['username'],
+                                                               'email' => $user['email'],
+                                                               'role' => $user['role']
+                                                           ])); ?>)">
+                                                            <i class="fas fa-pencil-alt"></i>
+                                                        </button>
                                                         <?php if ($user['username'] !== 'admin'): ?>
                                                         <a href="javascript:void(0)" class="btn btn-sm btn-danger" onclick="confirmDelete(<?php echo $user['id']; ?>)" title="លុប">
                                                             <i class="fas fa-trash"></i>
@@ -459,6 +469,46 @@ try {
         </div>
     </div>
 
+    <!-- Edit User Modal -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editUserModalLabel">កែប្រែអ្នកប្រើប្រាស់</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm" method="POST">
+                        <input type="hidden" id="edit_user_id" name="user_id">
+                        <div class="mb-3">
+                            <label for="edit_username" class="form-label">ឈ្មោះអ្នកប្រើប្រាស់</label>
+                            <input type="text" class="form-control" id="edit_username" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_email" class="form-label">អ៊ីមែល</label>
+                            <input type="email" class="form-control" id="edit_email" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_password" class="form-label">ពាក្យសម្ងាត់ថ្មី (ទុកទទេបើមិនផ្លាស់ប្តូរ)</label>
+                            <input type="password" class="form-control" id="edit_password" name="password">
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_role" class="form-label">តួនាទី</label>
+                            <select class="form-select" id="edit_role" name="role" required>
+                                <option value="admin">Admin</option>
+                                <option value="user">User</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">បោះបង់</button>
+                    <button type="button" class="btn btn-primary" onclick="updateUser()">រក្សាទុក</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
@@ -519,6 +569,59 @@ try {
                 });
             });
         });
+
+        // Edit User
+        function editUser(userData) {
+            document.getElementById('edit_user_id').value = userData.id;
+            document.getElementById('edit_username').value = userData.username;
+            document.getElementById('edit_email').value = userData.email;
+            document.getElementById('edit_role').value = userData.role;
+            document.getElementById('edit_password').value = ''; // Clear password field
+        }
+
+        // Update User
+        function updateUser() {
+            const form = document.getElementById('editUserForm');
+            const formData = new FormData(form);
+
+            fetch('update-user-ajax.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+                    modal.hide();
+                    
+                    // Show success message
+                    Swal.fire({
+                        title: 'ជោគជ័យ!',
+                        text: 'អ្នកប្រើប្រាស់ត្រូវបានធ្វើបច្ចុប្បន្នភាពដោយជោគជ័យ',
+                        icon: 'success'
+                    }).then(() => {
+                        // Reload page to show updated data
+                        window.location.reload();
+                    });
+                } else {
+                    // Show error message
+                    Swal.fire({
+                        title: 'បរាជ័យ!',
+                        text: data.message || 'មានបញ្ហាក្នុងការធ្វើបច្ចុប្បន្នភាពអ្នកប្រើប្រាស់',
+                        icon: 'error'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    title: 'បរាជ័យ!',
+                    text: 'មានបញ្ហាក្នុងការធ្វើបច្ចុប្បន្នភាពអ្នកប្រើប្រាស់',
+                    icon: 'error'
+                });
+            });
+        }
 
         // Records per page change
         document.getElementById('recordsPerPage').addEventListener('change', function() {
