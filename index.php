@@ -105,8 +105,14 @@ include 'includes/config.php';
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-white text-uppercase mb-1">
-                                            កិច្ចការផ្ទះមិនទាន់ធ្វើ</div>
-                                        <div class="h5 mb-0 font-weight-bold text-white" id="pendingAssignments">០</div>
+                                            សិស្សមិនទាន់បង់ប្រាក់ប្រចាំខែ
+                                        </div>
+                                        <?php
+                                            $select="SELECT COUNT(*) as count FROM `payments` WHERE pay_type='Monthly' and payment_status='Pending'";
+                                            $res=$conn->query($select);
+                                            $count=$res->fetch_assoc()['count'];
+                                        ?>
+                                        <div class="h5 mb-0 font-weight-bold text-white" id="pendingAssignments"><?php echo  $count?></div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-clipboard-list fa-2x text-white-50"></i>

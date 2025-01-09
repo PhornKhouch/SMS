@@ -54,7 +54,7 @@ $query = "SELECT s.student_id, s.name as student_name,
           FROM students s 
           LEFT JOIN subjects sub ON s.class = sub.id 
           LEFT JOIN payments p ON s.id = p.student_id
-          Where p.pay_type in ('Monthly', 'Half')
+          Where p.pay_type in ('Monthly', 'Half') AND payment_status='Pending'
           ORDER BY p.payment_date DESC";
 
 $stmt = $pdo->prepare($query);

@@ -67,7 +67,7 @@ try {
         $query .= " WHERE " . implode(" AND ", $where_conditions);
     }
     
-    $query .= " ORDER BY p.payment_date DESC LIMIT :offset, :records_per_page";
+    $query .= " ORDER BY p.student_id DESC LIMIT :offset, :records_per_page";
     
     $stmt = $pdo->prepare($query);
     foreach ($params as $key => $value) {

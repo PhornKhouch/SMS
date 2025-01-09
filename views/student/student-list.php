@@ -62,7 +62,7 @@ $query = "SELECT s.*, sub.subject_name as class_name
           FROM students s 
           LEFT JOIN subjects sub ON s.class = sub.id 
           $where 
-          ORDER BY s.name 
+          ORDER BY s.student_id DESC 
           LIMIT :offset, :records_per_page";
 $stmt = $pdo->prepare($query);
 foreach ($params as $key => $value) {
