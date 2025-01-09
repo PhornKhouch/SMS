@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once "../../includes/config.php";
+require_once "../../includes/telegram_helper.php";
 
 // Define base path for links
 $basePath = "../../";
@@ -54,6 +55,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             ':created_by' => $created_by,
             ':pay_type' => $pay_type
         ]);
+
+        // Get student name for the Telegram message
+        $studentStmt = $pdo->prepare("SELECT name FROM students WHERE id = ?");
+        $studentStmt->execute([$student_id]);
+        $studentName = $studentStmt->fetchColumn();
+
+        // Format and send Telegram message
+        $telegramMessage = formatPaymentMessage(
+            $studentName,
+            $payment_amount,
+            $payment_date,
+            $payment_method,
+            $payment_status,
+            $pay_type
+        );
+        sendTelegramMessage($telegramMessage);
 
         $_SESSION['success_message'] = "ការបង់ប្រាក់ត្រូវបានបន្ថែមដោយជោគជ័យ";
         header("Location: payment-list.php");

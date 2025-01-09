@@ -176,15 +176,22 @@ try {
                                                 <td><?php echo htmlspecialchars($subject['credits']); ?></td>
                                                 <td><?php echo htmlspecialchars($subject['description']); ?></td>
                                                 <td class="text-center">
-                                                    <button class="btn btn-info btn-sm view-subject" data-id="<?php echo $subject['id']; ?>" title="មើល">
-                                                        <i class="fas fa-eye"></i>
-                                                    </button>
-                                                    <a href="edit-subject.php?id=<?php echo $subject['id']; ?>" class="btn btn-primary btn-sm" title="កែប្រែ">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
-                                                    <button class="btn btn-danger btn-sm delete-subject" data-id="<?php echo $subject['id']; ?>" title="លុប">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
+                                                    <div class="dropdown">
+                                                        <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="actionDropdown<?php echo $subject['id']; ?>" data-bs-toggle="dropdown" aria-expanded="false">
+                                                            សកម្មភាព
+                                                        </button>
+                                                        <ul class="dropdown-menu" aria-labelledby="actionDropdown<?php echo $subject['id']; ?>">
+                                                            <li><button class="dropdown-item view-subject" data-id="<?php echo $subject['id']; ?>">
+                                                                <i class="fas fa-eye"></i> មើល
+                                                            </button></li>
+                                                            <li><a class="dropdown-item" href="edit-subject.php?id=<?php echo $subject['id']; ?>">
+                                                                <i class="fas fa-edit"></i> កែប្រែ
+                                                            </a></li>
+                                                            <li><button class="dropdown-item delete-subject" data-id="<?php echo $subject['id']; ?>">
+                                                                <i class="fas fa-trash"></i> លុប
+                                                            </button></li>
+                                                        </ul>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>

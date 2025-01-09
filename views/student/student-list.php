@@ -218,16 +218,21 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             </span>
                                         </td>
                                         <td>
-                                            <div class="btn-group">
-                                                <a href="view-student.php?id=<?php echo $student['id']; ?>" class="btn btn-sm btn-info" title="មើល">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <a href="edit-student.php?id=<?php echo $student['id']; ?>" class="btn btn-sm btn-primary" title="កែប្រែ">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <a href="javascript:void(0)" class="btn btn-sm btn-danger" onclick="confirmDelete(<?php echo $student['id']; ?>)" title="លុប">
-                                                    <i class="fas fa-trash"></i>
-                                                </a>
+                                            <div class="dropdown">
+                                                <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="actionDropdown<?php echo $student['id']; ?>" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    សកម្មភាព
+                                                </button>
+                                                <ul class="dropdown-menu" aria-labelledby="actionDropdown<?php echo $student['id']; ?>">
+                                                    <li><a class="dropdown-item" href="view-student.php?id=<?php echo $student['id']; ?>">
+                                                        <i class="fas fa-eye"></i> មើល
+                                                    </a></li>
+                                                    <li><a class="dropdown-item" href="edit-student.php?id=<?php echo $student['id']; ?>">
+                                                        <i class="fas fa-edit"></i> កែប្រែ
+                                                    </a></li>
+                                                    <li><a class="dropdown-item" href="javascript:void(0)" onclick="confirmDelete(<?php echo $student['id']; ?>)">
+                                                        <i class="fas fa-trash"></i> លុប
+                                                    </a></li>
+                                                </ul>
                                             </div>
                                         </td>
                                     </tr>
