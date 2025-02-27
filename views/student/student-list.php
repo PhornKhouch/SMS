@@ -138,6 +138,9 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </nav>
                         </div>
                         <div>
+                            <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#importModal">
+                                <i class="fas fa-file-import"></i> នាំចូល Excel
+                            </button>
                             <a href="export-students.php<?php echo !empty($search) ? '?search=' . urlencode($search) : ''; ?><?php echo !empty($class_filter) ? '&class=' . urlencode($class_filter) : ''; ?><?php echo !empty($status_filter) ? '&status=' . urlencode($status_filter) : ''; ?>" class="btn btn-success me-2" id="exportBtn">
                                 <i class="fas fa-file-excel"></i> នាំចេញ Excel
                             </a>
@@ -151,7 +154,7 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-4">
-                            <div class="d-flex align-items-center">
+                            <div class="d-flex align-items-center gap-2">
                                 <span class="me-2">បង្ហាញ</span>
                                 <select class="form-select form-select-sm w-auto" id="recordsPerPage">
                                     <option value="10" <?php echo $records_per_page == 10 ? 'selected' : ''; ?>>១០</option>
@@ -159,6 +162,13 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <option value="50" <?php echo $records_per_page == 50 ? 'selected' : ''; ?>>៥០</option>
                                 </select>
                                 <span class="ms-2">ជួរ</span>
+                                <!-- Add bulk action controls -->
+                                <select class="form-select form-select-sm w-auto ms-3" id="bulkAction" disabled>
+                                    <option value="">ជ្រើសរើសសកម្មភាព</option>
+                                    <option value="active">ធ្វើឱ្យសកម្ម</option>
+                                    <option value="inactive">ធ្វើឱ្យអសកម្ម</option>
+                                </select>
+                                <button id="applyBulkAction" class="btn btn-primary btn-sm" disabled>អនុវត្ត</button>
                             </div>
                             <div class="search-box">
                                 <form action="" method="GET" class="d-flex gap-2">
@@ -187,6 +197,9 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <table class="table table-bordered align-middle">
                                 <thead>
                                     <tr>
+                                        <th>
+                                            <input type="checkbox" class="form-check-input" id="selectAll">
+                                        </th>
                                         <th>អត្តលេខសិស្ស</th>
                                         <th>រូបថត</th>
                                         <th>ឈ្មោះ</th>
@@ -200,6 +213,9 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <tbody>
                                     <?php foreach ($students as $student): ?>
                                     <tr class="student-row" data-student-id="<?php echo htmlspecialchars($student['student_id']); ?>">
+                                        <td>
+                                            <input type="checkbox" class="form-check-input student-checkbox" value="<?php echo $student['id']; ?>">
+                                        </td>
                                         <td><?php echo htmlspecialchars($student['student_id']); ?></td>
                                         <td>
                                             <img src="<?php echo !empty($student['photo']) ? $basePath . 'uploads/students/' . $student['photo'] : $basePath . 'assets/images/default-avatar.png'; ?>" 
@@ -354,6 +370,36 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
+    <!-- Import Modal -->
+    <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importModalLabel">នាំចូលទិន្នន័យសិស្ស</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="import-students.php" method="POST" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="excelFile" class="form-label">ជ្រើសរើសឯកសារ Excel</label>
+                            <input type="file" class="form-control" id="excelFile" name="excelFile" accept=".xlsx, .xls" required>
+                        </div>
+                        <div class="alert alert-info">
+                            <small>
+                                <i class="fas fa-info-circle"></i> សូមប្រើប្រាស់ទម្រង់ Excel ដែលបានកំណត់។ អ្នកអាច
+                                <a href="download-template.php" class="alert-link">ទាញយកទម្រង់នេះ</a> សម្រាប់បំពេញទិន្នន័យ។
+                            </small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">បោះបង់</button>
+                        <button type="submit" class="btn btn-primary">នាំចូល</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
@@ -479,6 +525,90 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
             setTimeout(() => {
                 loadingModal.hide();
             }, 3000);
+        });
+
+        // Handle select all checkbox
+        $('#selectAll').change(function() {
+            const isChecked = $(this).prop('checked');
+            $('.student-checkbox').prop('checked', isChecked);
+            updateBulkActionControls();
+        });
+
+        // Handle individual checkboxes
+        $('.student-checkbox').change(function() {
+            updateBulkActionControls();
+            // Update select all checkbox
+            const allChecked = $('.student-checkbox:checked').length === $('.student-checkbox').length;
+            $('#selectAll').prop('checked', allChecked);
+        });
+
+        // Update bulk action controls based on selection
+        function updateBulkActionControls() {
+            const checkedCount = $('.student-checkbox:checked').length;
+            $('#bulkAction').prop('disabled', checkedCount === 0);
+            $('#applyBulkAction').prop('disabled', checkedCount === 0);
+        }
+
+        // Handle bulk action
+        $('#applyBulkAction').click(function() {
+            const action = $('#bulkAction').val();
+            if (!action) {
+                toastr.warning('សូមជ្រើសរើសសកម្មភាព');
+                return;
+            }
+
+            const selectedIds = $('.student-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get();
+
+            if (selectedIds.length === 0) {
+                toastr.warning('សូមជ្រើសរើសសិស្សយ៉ាងហោចណាស់មួយ');
+                return;
+            }
+
+            const confirmMessage = action === 'active' ? 
+                'តើអ្នកពិតជាចង់ធ្វើឱ្យសិស្សទាំងនេះសកម្មឡើងវិញមែនទេ?' : 
+                'តើអ្នកពិតជាចង់ធ្វើឱ្យសិស្សទាំងនេះអសកម្មមែនទេ?';
+
+            Swal.fire({
+                title: confirmMessage,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'យល់ព្រម',
+                cancelButtonText: 'បោះបង់'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading modal
+                    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+                    loadingModal.show();
+
+                    // Send AJAX request
+                    $.ajax({
+                        url: 'update-student-status.php',
+                        method: 'POST',
+                        data: {
+                            ids: selectedIds,
+                            status: action === 'active' ? 'Active' : 'Inactive'
+                        },
+                        success: function(response) {
+                            loadingModal.hide();
+                            if (response.success) {
+                                toastr.success('បានធ្វើបច្ចុប្បន្នភាពដោយជោគជ័យ');
+                                // Reload the page to show updated statuses
+                                window.location.reload();
+                            } else {
+                                toastr.error(response.message || 'មានបញ្ហាក្នុងការធ្វើបច្ចុប្បន្នភាព');
+                            }
+                        },
+                        error: function() {
+                            loadingModal.hide();
+                            toastr.error('មានបញ្ហាក្នុងការធ្វើបច្ចុប្បន្នភាព');
+                        }
+                    });
+                }
+            });
         });
     </script>
 </body>

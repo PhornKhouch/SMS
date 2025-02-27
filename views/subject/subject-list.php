@@ -176,13 +176,16 @@ try {
                                                 <td><?php echo htmlspecialchars($subject['credits']); ?></td>
                                                 <td><?php echo htmlspecialchars($subject['description']); ?></td>
                                                 <td class="text-center">
-                                                    <div class="dropdown">
+                                                    <div class="btn-group">
                                                         <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="actionDropdown<?php echo $subject['id']; ?>" data-bs-toggle="dropdown" aria-expanded="false">
                                                             សកម្មភាព
                                                         </button>
                                                         <ul class="dropdown-menu" aria-labelledby="actionDropdown<?php echo $subject['id']; ?>">
                                                             <li><button class="dropdown-item view-subject" data-id="<?php echo $subject['id']; ?>">
                                                                 <i class="fas fa-eye"></i> មើល
+                                                            </button></li>
+                                                            <li><button class="dropdown-item view-lessons" data-id="<?php echo $subject['id']; ?>" data-subject="<?php echo htmlspecialchars($subject['subject_name']); ?>">
+                                                                <i class="fas fa-book"></i> មើលមេរៀន
                                                             </button></li>
                                                             <li><a class="dropdown-item" href="edit-subject.php?id=<?php echo $subject['id']; ?>">
                                                                 <i class="fas fa-edit"></i> កែប្រែ
@@ -274,6 +277,64 @@ try {
         </div>
     </div>
 
+    <!-- Modal for View Lessons -->
+    <div class="modal fade" id="viewLessonsModal" tabindex="-1" aria-labelledby="viewLessonsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewLessonsModalLabel">មេរៀនទាំងអស់</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="lessons-list">
+                        <!-- Lessons will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Upload Lesson -->
+    <div class="modal fade" id="uploadLessonModal" tabindex="-1" aria-labelledby="uploadLessonModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadLessonModalLabel">បន្ថែមមេរៀនថ្មី</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="uploadLessonForm" enctype="multipart/form-data">
+                        <input type="hidden" name="subject_id" id="upload_subject_id">
+                        <div class="mb-3">
+                            <label for="lesson_name" class="form-label">ឈ្មោះមេរៀន</label>
+                            <input type="text" class="form-control" id="lesson_name" name="lesson_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="lesson_file" class="form-label">ជ្រើសរើសឯកសារ PDF</label>
+                            <input type="file" class="form-control" id="lesson_file" name="lesson_file" accept=".pdf" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">បន្ថែម</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF Viewer Modal -->
+    <div class="modal fade" id="pdfViewerModal" tabindex="-1" aria-labelledby="pdfViewerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="pdfViewerModalLabel">មើលមេរៀន PDF</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0" style="height: 80vh;">
+                    <iframe id="pdfViewer" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -281,6 +342,20 @@ try {
     
     <script>
     $(document).ready(function() {
+        // Check system status when page loads
+        $.ajax({
+            url: 'check-upload.php',
+            type: 'GET',
+            success: function(response) {
+                if (!response.success) {
+                    console.error('System check failed:', response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('System check error:', error);
+            }
+        });
+
         // Check for success message
         <?php if (isset($_SESSION['success_message'])): ?>
             Swal.fire({
@@ -392,6 +467,8 @@ try {
                         data: { id: id },
                         dataType: 'json',
                         success: function(response) {
+                            Swal.close();
+                            
                             if (response.success) {
                                 Swal.fire({
                                     icon: 'success',
@@ -411,12 +488,210 @@ try {
                                 });
                             }
                         },
-                        error: function() {
+                        error: function(xhr, status, error) {
                             Swal.close();
                             Swal.fire({
                                 icon: 'error',
                                 title: 'បរាជ័យ!',
                                 text: 'មានបញ្ហាក្នុងការភ្ជាប់ទៅកាន់ម៉ាស៊ីនមេ'
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        // View Lessons
+        $('.view-lessons').click(function() {
+            const subjectId = $(this).data('id');
+            
+            // Load lessons for this subject
+            $.ajax({
+                url: 'get-lessons.php',
+                type: 'GET',
+                data: { subject_id: subjectId },
+                success: function(response) {
+                    const data = JSON.parse(response);
+                    if (data.success) {
+                        let html = '<div class="list-group">';
+                        if (data.lessons.length > 0) {
+                            data.lessons.forEach(lesson => {
+                                html += `
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">${lesson.lesson_name}</h6>
+                                            <small class="text-muted">បង្កើតនៅ: ${lesson.created_at}</small>
+                                        </div>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-sm btn-primary view-pdf" data-file="../../${lesson.file_path}">
+                                                <i class="fas fa-eye"></i> មើល
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-danger delete-lesson" data-id="${lesson.id}">
+                                                <i class="fas fa-trash"></i> លុប
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                        } else {
+                            html += '<div class="text-center p-3">មិនមានមេរៀននៅឡើយទេ</div>';
+                        }
+                        html += '</div>';
+                        html += `
+                            <div class="text-center mt-3">
+                                <button type="button" class="btn btn-primary" onclick="openUploadModal(${subjectId})">
+                                    <i class="fas fa-plus"></i> បន្ថែមមេរៀនថ្មី
+                                </button>
+                            </div>
+                        `;
+                        $('.lessons-list').html(html);
+                        $('#viewLessonsModal').modal('show');
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'បរាជ័យ!',
+                            text: data.message
+                        });
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'បរាជ័យ!',
+                        text: 'មានបញ្ហាក្នុងការទាញយកមេរៀន'
+                    });
+                }
+            });
+        });
+
+        // View PDF in Modal
+        $(document).on('click', '.view-pdf', function(e) {
+            e.preventDefault();
+            const pdfFile = $(this).data('file');
+            // Remove any leading dots and slashes
+            const cleanPath = pdfFile.replace(/^[./\\]+/, '');
+            const viewerUrl = 'view-pdf.php?file=' + encodeURIComponent(cleanPath);
+            $('#pdfViewer').attr('src', viewerUrl);
+            $('#viewLessonsModal').modal('hide');
+            $('#pdfViewerModal').modal('show');
+        });
+
+        // When PDF viewer modal is hidden, show lessons modal again
+        $('#pdfViewerModal').on('hidden.bs.modal', function () {
+            $('#viewLessonsModal').modal('show');
+            $('#pdfViewer').attr('src', ''); // Clear the PDF source
+        });
+
+        // Function to open upload modal
+        window.openUploadModal = function(subjectId) {
+            $('#upload_subject_id').val(subjectId);
+            $('#viewLessonsModal').modal('hide');
+            $('#uploadLessonModal').modal('show');
+        };
+
+        // Handle lesson upload
+        $('#uploadLessonForm').submit(function(e) {
+            e.preventDefault();
+            
+            // Show loading indicator
+            Swal.fire({
+                title: 'កំពុងផ្ទុកឡើង...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            const formData = new FormData(this);
+            
+            $.ajax({
+                url: 'upload-lesson.php',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    try {
+                        const data = JSON.parse(response);
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'ជោគជ័យ!',
+                                text: 'មេរៀនត្រូវបានបន្ថែមដោយជោគជ័យ'
+                            }).then(() => {
+                                $('#uploadLessonForm')[0].reset();
+                                $('#uploadLessonModal').modal('hide');
+                                // Refresh lessons list
+                                $('.view-lessons[data-id="' + formData.get('subject_id') + '"]').click();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'បរាជ័យ!',
+                                text: data.message || 'មានបញ្ហាក្នុងការបន្ថែមមេរៀន'
+                            });
+                        }
+                    } catch (e) {
+                        console.error('Upload error:', e);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'បរាជ័យ!',
+                            text: 'មានបញ្ហាក្នុងការបន្ថែមមេរៀន'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Upload error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'បរាជ័យ!',
+                        text: 'មានបញ្ហាក្នុងការបន្ថែមមេរៀន'
+                    });
+                }
+            });
+        });
+
+        // Delete lesson
+        $(document).on('click', '.delete-lesson', function() {
+            const lessonId = $(this).data('id');
+            
+            Swal.fire({
+                title: 'តើអ្នកប្រាកដទេ?',
+                text: 'មេរៀននេះនឹងត្រូវលុបចោល',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'យល់ព្រម',
+                cancelButtonText: 'បោះបង់'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: 'delete-lesson.php',
+                        type: 'POST',
+                        data: { id: lessonId },
+                        success: function(response) {
+                            const data = JSON.parse(response);
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'ជោគជ័យ!',
+                                    text: 'មេរៀនត្រូវបានលុបដោយជោគជ័យ'
+                                }).then(() => {
+                                    // Refresh lessons list
+                                    $('.view-lessons:first').click();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'បរាជ័យ!',
+                                    text: data.message
+                                });
+                            }
+                        },
+                        error: function() {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'បរាជ័យ!',
+                                text: 'មានបញ្ហាក្នុងការលុបមេរៀន'
                             });
                         }
                     });

@@ -2,7 +2,7 @@
 
 function sendTelegramMessage($message) {
     $botToken = '5846535674:AAF0hdGkg8w0s0VI-rICf_jiQYixsAPVV0k'; // Telegram bot token
-    $chatId = '-675980742';     //  group chat ID
+    $chatId = '-675980742';//'-1002455165520';     //  group chat ID
     
     $url = "https://api.telegram.org/bot{$botToken}/sendMessage";
     

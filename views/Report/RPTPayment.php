@@ -27,7 +27,7 @@ if (!empty($class_filter)) {
 }
 
 if (!empty($status_filter)) {
-    $where_conditions[] = "p.payment_status = :month";
+    $where_conditions[] = "p.payment_status = :status";
     $params[':status'] = $status_filter;
 }
 
@@ -41,12 +41,13 @@ if (!empty($to_date)) {
     $params[':to_date'] = $to_date;
 }
 
-$where = '';
-if (!empty($where_conditions)) {
-    $where = "WHERE " . implode(" AND ", $where_conditions);
-}
-
 // Fetch payment report data
+$base_conditions = ["p.pay_type in ('Monthly', 'Half')"];
+if (empty($status_filter)) {
+    $base_conditions[] = "p.payment_status='Pending'"; // Default to Pending if no status selected
+}
+$where_conditions = array_merge($base_conditions, $where_conditions);
+
 $query = "SELECT s.student_id, s.name as student_name, 
           sub.subject_name as class_name, 
           p.payment_date, p.payment_amount as amount, p.payment_status as status,
@@ -54,7 +55,7 @@ $query = "SELECT s.student_id, s.name as student_name,
           FROM students s 
           LEFT JOIN subjects sub ON s.class = sub.id 
           LEFT JOIN payments p ON s.id = p.student_id
-          Where p.pay_type in ('Monthly', 'Half') AND payment_status='Pending'
+          WHERE " . implode(" AND ", $where_conditions) . "
           ORDER BY p.payment_date DESC";
 
 $stmt = $pdo->prepare($query);
@@ -269,7 +270,7 @@ foreach ($payments as $payment) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js"></script>
     <script>
         // Initialize date pickers
         flatpickr(".datepicker", {

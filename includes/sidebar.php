@@ -173,6 +173,22 @@ $basePath = str_repeat('../', $depth - 2);
                 </li>
             </ul>
         </li>
+        <!-- Certificate Management -->
+        <li>
+            <a href="#certificateSubmenu" data-bs-toggle="collapse"  >
+                <i class="fas fa-book"></i>
+                <span>វិញ្ញាបនបត្រសិស្ស</span>
+            </a>
+            <ul class="collapse list-unstyled" id="certificateSubmenu">
+                <li>
+                    <a href="<?php echo $basePath; ?>views/certificate/index.php">
+                        <i class="fas fa-file-alt"></i>
+                        <span>វិញ្ញាបនបត្រសិស្ស</span>
+                    </a>
+                </li>
+                
+            </ul>
+        </li>
         <!-- Settings -->
         <li>
             <a href="<?php echo $basePath; ?>views/settings/list-settings.php">

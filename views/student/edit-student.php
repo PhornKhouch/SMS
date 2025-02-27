@@ -51,6 +51,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $parent_phone = $_POST['parent_phone'];
         $status = $_POST['status'];
         $photo = $_FILES['photo'];
+        $telegram_chat_id = $_POST['telegram_chat_id'];
 
         // Start transaction
         $pdo->beginTransaction();
@@ -67,7 +68,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         address = :address,
                         parent_name = :parent_name,
                         parent_phone = :parent_phone,
-                        status = :status
+                        status = :status,
+                        telegram_chat_id = :telegram_chat_id
                         WHERE id = :id";
 
         $stmt = $pdo->prepare($update_query);
@@ -82,6 +84,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->bindParam(':parent_name', $parent_name);
         $stmt->bindParam(':parent_phone', $parent_phone);
         $stmt->bindParam(':status', $status);
+        $stmt->bindParam(':telegram_chat_id', $telegram_chat_id);
         $stmt->bindParam(':id', $_GET['id']);
 
         $stmt->execute();
@@ -258,7 +261,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     
                                     <div class="mb-3">
                                         <label for="phone" class="form-label">លេខទូរស័ព្ទ</label>
-                                        <input type="tel" class="form-control" id="phone" name="phone" value="<?php echo htmlspecialchars($student['phone']); ?>">
+                                        <input type="text" class="form-control" id="phone" name="phone" value="<?php echo htmlspecialchars($student['phone'] ?? ''); ?>">
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="telegram_chat_id" class="form-label">Telegram Chat ID</label>
+                                        <input type="text" class="form-control" id="telegram_chat_id" name="telegram_chat_id" value="<?php echo htmlspecialchars($student['telegram_chat_id'] ?? ''); ?>">
+                                        <div class="form-text">សម្រាប់ការផ្ញើវិញ្ញាបនបត្រតាម Telegram</div>
                                     </div>
                                     
                                     <div class="mb-3">

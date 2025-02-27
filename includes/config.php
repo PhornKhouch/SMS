@@ -4,6 +4,9 @@ define('DB_USERNAME', 'root');
 define('DB_PASSWORD', '');
 define('DB_NAME', 'sms_db');
 
+// Google OAuth Configuration
+define('GOOGLE_CLIENT_ID', '411254282610-h2l741abfv1erbnjre5feqt7m01ti7fl.apps.googleusercontent.com');
+
 // Create mysqli connection
 $conn = new mysqli(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_NAME);
 
